@@ -19,7 +19,7 @@ const VisionManager: React.FC = () => {
         setStatus(LoadingStatus.LOADING_MODEL);
         
         const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/wasm"
         );
 
         handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {

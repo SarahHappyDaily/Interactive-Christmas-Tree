@@ -102,7 +102,7 @@ const App: React.FC = () => {
         <Suspense fallback={null}>
           <LuxuryTree />
           
-          <EffectComposer disableNormalPass>
+          <EffectComposer enableNormalPass={false}>
             <Bloom luminanceThreshold={0.8} mipmapBlur intensity={1.5} radius={0.5} />
             <Vignette eskil={false} offset={0.1} darkness={0.8} />
             <Noise opacity={0.02} />
