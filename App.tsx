@@ -12,9 +12,9 @@ const GestureController = () => {
   const { camera } = useThree();
   const { handX, handY, handZ, isTracking } = useTreeStore();
   
-  // Smooth damped values
-  const currentPos = useRef(new THREE.Vector3(0, 2, 14));
-  const targetPos = useRef(new THREE.Vector3(0, 2, 14));
+  // Adjusted default position to 16. This moves the camera closer so the tree fills ~1/5 of the screen.
+  const currentPos = useRef(new THREE.Vector3(0, 0, 16));
+  const targetPos = useRef(new THREE.Vector3(0, 0, 16));
 
   useFrame((state, delta) => {
     // Enable gesture control whenever a hand is tracked (Open or Closed)
@@ -22,30 +22,19 @@ const GestureController = () => {
       // Mapping Hand Gestures to Camera Position
       
       // 1. Azimuth (Orbit Left/Right)
-      // handX 0 (Left) -> Angle -1.5 rad
-      // handX 1 (Right) -> Angle +1.5 rad
-      // handX 0.5 (Center) -> Angle 0
       const azimuth = (handX - 0.5) * 2.5; // range -1.25 to 1.25 radians
       
       // 2. Elevation (Orbit Up/Down)
-      // handY 0 (Top) -> Look from Above (High Y)
-      // handY 1 (Bottom) -> Look from Below (Low Y)
-      // Map 0..1 to +8 .. -2
-      const elevation = THREE.MathUtils.lerp(8, -2, handY);
+      // Map 0..1 to +12 .. -6 (Wider range for far camera)
+      const elevation = THREE.MathUtils.lerp(12, -6, handY);
       
       // 3. Distance (Zoom/Push/Pull)
-      // handZ is proxy for scale/closeness.
-      // Small handZ (0.1) -> Hand Far -> Camera Far (Zoom Out)
-      // Large handZ (0.3) -> Hand Close -> Camera Close (Zoom In)
-      // We map handZ range ~0.1-0.3 to Distance 25-8
-      // Clamp handZ input first to avoid extreme jumps
+      // handZ range ~0.1-0.3. 
+      // New range: 28 (Far) to 10 (Close). Default start is 16.
       const zInput = THREE.MathUtils.clamp(handZ, 0.05, 0.35);
-      const distance = THREE.MathUtils.mapLinear(zInput, 0.05, 0.35, 22, 6);
+      const distance = THREE.MathUtils.mapLinear(zInput, 0.05, 0.35, 28, 10);
 
       // Convert Spherical to Cartesian
-      // x = d * sin(azimuth)
-      // z = d * cos(azimuth)
-      // y = elevation
       targetPos.current.set(
         distance * Math.sin(azimuth),
         elevation,
@@ -56,10 +45,9 @@ const GestureController = () => {
       currentPos.current.lerp(targetPos.current, delta * 3); // Fast response
       
       camera.position.copy(currentPos.current);
-      camera.lookAt(0, 3, 0); // Look at tree center
+      camera.lookAt(0, 0, 0); // Look at center
     } else {
        // When not tracking, we leave the camera where it is.
-       // OrbitControls can take over if enabled in App, but we need to sync position
        currentPos.current.copy(camera.position);
     }
   });
@@ -82,7 +70,8 @@ const App: React.FC = () => {
         gl={{ antialias: false, toneMappingExposure: 1.2 }} 
         shadows
       >
-        <PerspectiveCamera makeDefault position={[0, 2, 14]} fov={50} />
+        {/* Adjusted default position to [0, 0, 16] */}
+        <PerspectiveCamera makeDefault position={[0, 0, 16]} fov={50} />
         
         {/* Gesture Controller */}
         <GestureController />
@@ -92,7 +81,7 @@ const App: React.FC = () => {
         
         {/* Environment: Stars & Dust */}
         <Stars radius={100} depth={50} count={7000} factor={6} saturation={0} fade speed={0.5} />
-        <Sparkles count={800} scale={15} size={4} speed={0.3} opacity={0.6} color="#ffd700" />
+        <Sparkles count={800} scale={20} size={4} speed={0.3} opacity={0.6} color="#ffd700" />
         
         {/* Warm Magical Lighting */}
         <ambientLight intensity={0.2} color="#503060" /> 
@@ -100,13 +89,13 @@ const App: React.FC = () => {
           position={[10, 20, 10]} 
           angle={0.5} 
           penumbra={1} 
-          intensity={2.8} // Reduced from 4 (approx 30%)
+          intensity={2.8} 
           color="#ffaa55" // Warm Golden Light
           castShadow 
           shadow-bias={-0.0001}
         />
-        <pointLight position={[-8, 6, -8]} intensity={2} color="#cc33ff" distance={20} /> 
-        <pointLight position={[0, -2, 5]} intensity={1} color="#ff3333" distance={10} /> 
+        <pointLight position={[-8, 6, -8]} intensity={2} color="#cc33ff" distance={30} /> 
+        <pointLight position={[0, -2, 5]} intensity={1} color="#ff3333" distance={20} /> 
         
         <Environment preset="city" blur={0.8} />
 

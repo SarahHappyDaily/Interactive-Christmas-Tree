@@ -58,14 +58,14 @@ const createMessageTexture = (text: string, styleIndex: number) => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return new THREE.Texture();
 
-  // Define 4 distinct stationery styles with Handwriting Fonts
+  // Define 4 distinct stationery styles with CLEAR Handwriting Fonts (No hard-to-read cursives)
   const styles = [
     // 1. Vintage Kraft Paper
     { 
       bg: '#e8dcca', 
       text: '#4a3b2a', 
       border: '#8d6e63',
-      font: '"Indie Flower", cursive', // Casual handwritten
+      font: '"Indie Flower", cursive', // Very readable
       decorType: 'dashed'
     },
     // 2. Soft Pink Love Letter
@@ -73,7 +73,7 @@ const createMessageTexture = (text: string, styleIndex: number) => {
       bg: '#fff0f5', 
       text: '#c2185b', 
       border: '#f48fb1',
-      font: '"Great Vibes", cursive', // Elegant script
+      font: '"Caveat", cursive', // Clear marker style
       decorType: 'hearts'
     },
     // 3. Winter Frost
@@ -81,7 +81,7 @@ const createMessageTexture = (text: string, styleIndex: number) => {
       bg: '#e3f2fd', 
       text: '#01579b', 
       border: '#81d4fa',
-      font: '"Caveat", cursive', // Playful marker
+      font: '"Caveat", cursive', 
       decorType: 'snow'
     },
     // 4. Festive Holiday
@@ -89,7 +89,7 @@ const createMessageTexture = (text: string, styleIndex: number) => {
       bg: '#fff8e1', 
       text: '#b71c1c', 
       border: '#ff6f00', 
-      font: '"Dancing Script", cursive', // Rythmic script
+      font: '"Indie Flower", cursive',
       decorType: 'double'
     }
   ];
@@ -138,11 +138,11 @@ const createMessageTexture = (text: string, styleIndex: number) => {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = style.text;
   
-  // Font logic - 60px to be legible
-  ctx.font = `60px ${style.font}`;
+  // Font logic - Increased size for readability (was 60px)
+  ctx.font = `90px ${style.font}`;
 
   const lines = text.split('\n');
-  const lineHeight = 75;
+  const lineHeight = 100; // Increased line height
   const startY = 320 - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, i) => {
@@ -150,7 +150,7 @@ const createMessageTexture = (text: string, styleIndex: number) => {
   });
   
   // Footer Decoration
-  ctx.font = `30px ${style.font}`;
+  ctx.font = `40px ${style.font}`;
   ctx.globalAlpha = 0.6;
   ctx.fillText('~ Wisdom ~', 256, 580);
 
@@ -162,16 +162,11 @@ const createMessageTexture = (text: string, styleIndex: number) => {
 };
 
 
-// Helper to generate chaos position (random sphere)
-const getChaosPos = (scale = 10, minRatio = 0) => {
+// Helper to generate chaos position (SOLID VOLUME, random distribution)
+const getChaosPos = (maxRadius = 10) => {
   const theta = Math.random() * Math.PI * 2;
   const phi = Math.acos(2 * Math.random() - 1);
-  
-  // Uniform volume distribution shell
-  const minVol = Math.pow(minRatio, 3);
-  const rRandom = Math.random() * (1 - minVol) + minVol;
-  const r = Math.cbrt(rRandom) * scale;
-  
+  const r = maxRadius * Math.cbrt(Math.random());
   return new THREE.Vector3(
     r * Math.sin(phi) * Math.cos(theta),
     r * Math.sin(phi) * Math.sin(theta),
@@ -179,10 +174,8 @@ const getChaosPos = (scale = 10, minRatio = 0) => {
   );
 };
 
-// Helper to generate tree position (Cone Shell)
 const getTreePos = (t: number, theta: number, height: number, width: number) => {
   const y = height * t - height / 2;
-  // STRICT shell: radius is fixed based on height
   const radius = width * (1 - t);
   const x = radius * Math.cos(theta);
   const z = radius * Math.sin(theta);
@@ -270,7 +263,6 @@ const ParticleText = ({ text, position, size = 1.2, density = 2500, progressRef 
       bevelThickness: 0.02,
       bevelSize: 0.01,
       bevelOffset: 0,
-      bevelSegments: 3,
     });
     
     textGeo.center(); 
@@ -291,7 +283,6 @@ const ParticleText = ({ text, position, size = 1.2, density = 2500, progressRef 
         aTargetPos[i * 3 + 1] = tempPos.y;
         aTargetPos[i * 3 + 2] = tempPos.z;
         
-        // Scatter distance 20x for clean text
         const scatter = new THREE.Vector3((Math.random()-0.5), (Math.random()-0.5), (Math.random()-0.5))
           .normalize()
           .multiplyScalar((Math.random() * 5 + 2) * 20);
@@ -343,10 +334,10 @@ const ParticleText = ({ text, position, size = 1.2, density = 2500, progressRef 
 };
 
 /**
- * Sub-Component: Gift Pile
+ * Sub-Component: Gift Pile (Updated for Random Cloud Scatter with Motion)
  */
 const GiftPile = ({ progressRef }: { progressRef: React.MutableRefObject<number> }) => {
-  const count = 35; 
+  const count = 70; 
   const gifts = useMemo(() => {
     return new Array(count).fill(0).map(() => {
       const angle = Math.random() * Math.PI * 2;
@@ -354,7 +345,10 @@ const GiftPile = ({ progressRef }: { progressRef: React.MutableRefObject<number>
       const x = Math.cos(angle) * r;
       const z = Math.sin(angle) * r;
       const y = -TREE_HEIGHT/2 + (Math.random() * 0.8) - 0.2; 
+      const target = new THREE.Vector3(x, y, z);
+      const chaos = getChaosPos(15); 
       const scale = Math.random() * 0.4 + 0.3;
+      
       const palettes = [
           { box: '#b30000', ribbon: '#ffbf00' }, 
           { box: '#005500', ribbon: '#b30000' }, 
@@ -362,40 +356,71 @@ const GiftPile = ({ progressRef }: { progressRef: React.MutableRefObject<number>
           { box: '#b30000', ribbon: '#f0f0f0' }, 
           { box: '#002244', ribbon: '#c0c0c0' }, 
           { box: '#ffbf00', ribbon: '#f0f0f0' }, 
+          { box: '#ffffff', ribbon: '#ff0000' }, 
+          { box: '#ff0000', ribbon: '#ffffff' }, 
       ];
       const theme = palettes[Math.floor(Math.random() * palettes.length)];
+      
       return { 
-          pos: new THREE.Vector3(x, y, z), 
+          target,
+          chaos,
           scale, 
           boxColor: theme.box, 
           ribbonColor: theme.ribbon,
-          rot: new THREE.Euler(0, Math.random() * Math.PI * 2, 0) 
+          rot: new THREE.Euler(0, Math.random() * Math.PI * 2, 0),
+          chaosRot: new THREE.Euler(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI) 
       };
     });
   }, []);
 
-  const ref = useRef<THREE.Group>(null);
-  useFrame((state, delta) => {
-    if (ref.current) {
-        const progress = progressRef.current;
-        const s = 1 + progress * 0.5; // Reduce scale up
-        ref.current.scale.setScalar(s);
-        ref.current.rotation.y += delta * 0.05;
-    }
-  });
-
   return (
-    <group ref={ref}>
+    <group>
        {gifts.map((d, i) => (
-         <GiftBox key={i} {...d} />
+         <ScatteringGiftBox key={i} {...d} progressRef={progressRef} />
        ))}
     </group>
   );
 }
 
-const GiftBox = ({ pos, scale, boxColor, ribbonColor, rot }: any) => {
+const ScatteringGiftBox = ({ target, chaos, scale, boxColor, ribbonColor, rot, chaosRot, progressRef }: any) => {
+  const ref = useRef<THREE.Group>(null);
+  const pos = useRef(target.clone());
+
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    const progress = progressRef.current;
+    
+    // Lerp Base Position
+    const dest = progress > 0.5 ? chaos : target;
+    pos.current.lerp(dest, delta * 3);
+    ref.current.position.copy(pos.current);
+
+    // Rotation Logic
+    // If scattered, we add floating movement and continuous gentle rotation
+    const time = state.clock.elapsedTime;
+    
+    if (progress > 0.8) {
+      // Gentle Float (Speed Increased 3x)
+      ref.current.position.y += Math.sin(time * 2.4 + chaos.x * 10) * 0.005;
+      ref.current.position.x += Math.cos(time * 1.5 + chaos.z * 10) * 0.005;
+      
+      // Continuous Rotation (Speed Increased 3x approx)
+      ref.current.rotation.x += Math.sin(time * 0.9 + chaos.y) * 0.015;
+      ref.current.rotation.y += Math.cos(time * 0.6 + chaos.x) * 0.015;
+    } else {
+       // Transition to target static rotation
+       const targetRot = progress > 0.5 ? chaosRot : rot;
+       ref.current.rotation.x = THREE.MathUtils.lerp(ref.current.rotation.x, targetRot.x, delta * 2);
+       ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, targetRot.y, delta * 2);
+       ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, targetRot.z, delta * 2);
+    }
+    
+    const s = scale * (1 + progress * 0.2); 
+    ref.current.scale.setScalar(s);
+  });
+
   return (
-    <group position={pos} rotation={rot} scale={[scale, scale, scale]}>
+    <group ref={ref} rotation={rot} scale={[scale, scale, scale]}>
        <mesh castShadow receiveShadow position={[0, 0.5, 0]}>
           <boxGeometry args={[1, 1, 1]} />
           <meshStandardMaterial color={boxColor} roughness={0.3} />
@@ -420,7 +445,6 @@ const GiftBox = ({ pos, scale, boxColor, ribbonColor, rot }: any) => {
  * Sub-Component: Foliage (Particle System)
  */
 const Foliage = ({ progressRef }: { progressRef: React.MutableRefObject<number> }) => {
-  // Increased count to 9000 for Denser Surface
   const count = 9000;
   const meshRef = useRef<THREE.Points>(null);
   
@@ -430,13 +454,10 @@ const Foliage = ({ progressRef }: { progressRef: React.MutableRefObject<number> 
     const random = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
-      // Uniform Cone Distribution
       const t = 1 - Math.sqrt((i + 1) / (count + 1));
       const theta = i * GOLDEN_ANGLE;
-      
       const tPos = getTreePos(t, theta, TREE_HEIGHT, TREE_WIDTH);
       
-      // REDUCED NOISE: Keep particles tight to the "Shell" (surface)
       const noiseAmp = 0.05;
       tPos.x += (Math.random() - 0.5) * noiseAmp;
       tPos.y += (Math.random() - 0.5) * noiseAmp;
@@ -446,9 +467,7 @@ const Foliage = ({ progressRef }: { progressRef: React.MutableRefObject<number> 
       target[i * 3 + 1] = tPos.y;
       target[i * 3 + 2] = tPos.z;
 
-      // Chaos distribution
-      // UPDATED: Scatter radius decreased to 125 (was 250) based on user request (50% reduction)
-      const cPos = getChaosPos(125, 0.5);
+      const cPos = getChaosPos(125); 
       chaos[i * 3] = cPos.x;
       chaos[i * 3 + 1] = cPos.y;
       chaos[i * 3 + 2] = cPos.z;
@@ -516,7 +535,7 @@ const OrnamentLayer = ({
       const theta = i * GOLDEN_ANGLE * 13.0; 
       return {
         target: getTreePos(t, theta, TREE_HEIGHT, TREE_WIDTH * 0.9),
-        chaos: getChaosPos(20, 0.3),
+        chaos: getChaosPos(18),
         scale: Math.random() * 0.5 + 0.5,
         rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0)
       }
@@ -549,7 +568,7 @@ const OrnamentInstance = ({ data, scaleBase, progressRef }: any) => {
   const { target, chaos, scale } = data;
   const currentPos = useRef(target.clone());
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!ref.current) return;
     
     const progress = progressRef.current;
@@ -558,48 +577,79 @@ const OrnamentInstance = ({ data, scaleBase, progressRef }: any) => {
 
     ref.current.position.copy(currentPos.current);
     
+    // Scale Logic
     const s = scaleBase * scale * (1 - progress * 0.3);
     ref.current.scale.set(s, s, s);
     
-    ref.current.rotation.x += delta;
-    ref.current.rotation.y += delta;
+    // Rotation & Float Logic
+    if (progress > 0.8) {
+        // Floating (Disordered movement - Speed Increased 3x)
+        const time = state.clock.elapsedTime;
+        ref.current.position.y += Math.sin(time * 3.0 + chaos.x * 10) * 0.01;
+        ref.current.position.z += Math.cos(time * 3.0 + chaos.y * 10) * 0.01;
+
+        // Gentle disordered rotation (Speed Increased 3x)
+        ref.current.rotation.x += delta * 0.6;
+        ref.current.rotation.y += delta * 0.45;
+    } else {
+        // Standard Tree Spin
+        ref.current.rotation.x += delta;
+        ref.current.rotation.y += delta;
+    }
   });
 
   return <Instance ref={ref} />;
 };
 
 /**
- * Sub-Component: Message Card (Replaces PhotoPlane)
+ * Sub-Component: Message Card
  */
 const MessageCard = ({ text, styleIndex, isFocused }: { text: string, styleIndex: number, isFocused: boolean }) => {
   const texture = useMemo(() => createMessageTexture(text, styleIndex), [text, styleIndex]);
 
+  // Create Curled Paper Geometry
+  const geometry = useMemo(() => {
+    const geo = new THREE.PlaneGeometry(0.7, 0.85, 16, 16);
+    const pos = geo.attributes.position;
+    for(let i=0; i < pos.count; i++){
+        const y = pos.getY(i); 
+        const v = (y + 0.425) / 0.85; 
+        const curl = 0.15 * Math.pow(1 - v, 3);
+        pos.setZ(i, pos.getZ(i) + curl);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+
   return (
-    <mesh position={[0, 0.08, 0.011]} rotation={[0, 0, 0]}>
-      <planeGeometry args={[0.7, 0.85]} /> 
-      {/* 
-        Unfocused brightness increased to #e0e0e0 (~88%) for better visibility.
-        Focused state remains pure white #ffffff.
-      */}
-      <meshBasicMaterial 
-        map={texture} 
-        side={THREE.DoubleSide} 
-        transparent 
-        color={isFocused ? "#ffffff" : "#e0e0e0"} 
-      /> 
-    </mesh>
+    <group>
+      <mesh position={[0, 0.08, 0.011]} geometry={geometry}>
+        <meshBasicMaterial 
+          map={texture} 
+          side={THREE.FrontSide} 
+          transparent 
+          color={isFocused ? "#ffffff" : "#e0e0e0"} 
+        /> 
+      </mesh>
+      <mesh position={[0, 0.08, 0.0105]} geometry={geometry}>
+        <meshStandardMaterial 
+          color="#f5f5dc" 
+          side={THREE.BackSide} 
+          roughness={0.8}
+        /> 
+      </mesh>
+    </group>
   );
 };
 
 /**
- * Sub-Component: Polaroids (Now Blessing Cards)
+ * Sub-Component: Polaroids (Blessing Cards)
  */
 const Polaroids = ({ progressRef }: { progressRef: React.MutableRefObject<number> }) => {
   const count = 48;
   const { isHandOpen } = useTreeStore();
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
-  // Reset focus if hand closes (Tree mode)
   useEffect(() => {
     if (!isHandOpen) setFocusedIndex(null);
   }, [isHandOpen]);
@@ -615,10 +665,16 @@ const Polaroids = ({ progressRef }: { progressRef: React.MutableRefObject<number
     return new Array(count).fill(0).map((_, i) => {
       const t = 1 - Math.sqrt((i+1)/(count+1));
       const theta = i * GOLDEN_ANGLE;
+      const chaos = getChaosPos(15);
+      const chaosRotation = new THREE.Euler(
+          (Math.random() - 0.5) * 0.5, 
+          Math.random() * Math.PI * 2, 
+          (Math.random() - 0.5) * 0.3  
+      );
       return {
         target: getTreePos(t, theta, TREE_HEIGHT, TREE_WIDTH * 1.1),
-        // Photos stay in the center void (radius 12), while stars are pushed to 12.5+
-        chaos: getChaosPos(12, 0),
+        chaos,
+        chaosRotation
       }
     });
   }, [count]);
@@ -662,64 +718,74 @@ const SinglePolaroid = ({
 }: any) => {
   const groupRef = useRef<THREE.Group>(null);
   const currentPos = useRef(data.target.clone());
-  
+  const targetQuaternion = useRef(new THREE.Quaternion());
+  const dummyObj = useMemo(() => new THREE.Object3D(), []);
+
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     const progress = progressRef.current;
     
+    // --- POSITION & ROTATION LOGIC ---
     if (isFocused) {
-        // --- FOCUSED STATE ---
-        // Lerp to position just in front of camera
+        // Focused: Fly to camera
         const camPos = state.camera.position;
         const camDir = new THREE.Vector3();
         state.camera.getWorldDirection(camDir);
-        
-        // Target: 2.5 units in front of camera
         const target = camPos.clone().add(camDir.multiplyScalar(3.0));
-        currentPos.current.lerp(target, delta * 5); // Fast smooth transition
         
+        currentPos.current.lerp(target, delta * 5);
         groupRef.current.position.copy(currentPos.current);
-        groupRef.current.lookAt(state.camera.position);
         
-        // Scale Up (2.5x)
         const targetScale = 2.5;
         groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 5);
 
+        dummyObj.position.copy(currentPos.current);
+        dummyObj.lookAt(state.camera.position);
+        targetQuaternion.current.copy(dummyObj.quaternion);
+
     } else {
-        // --- NORMAL STATE ---
+        // Normal State (Tree or Chaos)
         const dest = progress > 0.5 ? data.chaos : data.target;
         currentPos.current.lerp(dest, delta * 2);
         groupRef.current.position.copy(currentPos.current);
         
-        // Scale Normal (1.0)
-        groupRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), delta * 2);
+        const isScattered = progress > 0.5;
+        const baseScale = isScattered ? 3.0 : 1.0;
+        groupRef.current.scale.lerp(new THREE.Vector3(baseScale, baseScale, baseScale), delta * 2);
 
         if (progress > 0.5) {
-            // Chaos State: Float and look at camera
-            groupRef.current.lookAt(state.camera.position);
+            // Chaos State: Floating gently
+            const euler = data.chaosRotation;
+            
+            // Minimal drift to keep them readable but alive
+            const driftX = Math.sin(state.clock.elapsedTime * 0.5 + index) * 0.05;
+            const driftY = Math.cos(state.clock.elapsedTime * 0.3 + index) * 0.05;
+            
+            dummyObj.rotation.set(euler.x + driftX, euler.y + driftY, euler.z);
+            targetQuaternion.current.setFromEuler(dummyObj.rotation);
         } else {
             // Tree State: Strict upright facing outward
             const angle = Math.atan2(currentPos.current.x, currentPos.current.z);
-            groupRef.current.rotation.set(0, angle, 0);
+            dummyObj.rotation.set(0, angle, 0);
+            targetQuaternion.current.setFromEuler(dummyObj.rotation);
         }
     }
+    
+    groupRef.current.quaternion.slerp(targetQuaternion.current, delta * 3);
   });
 
   return (
     <group 
       ref={groupRef} 
       onClick={(e) => {
-         // Only allow interaction when scattered (Hand Open)
          if (isHandOpen) {
             e.stopPropagation();
             setFocusedIndex(isFocused ? null : index);
          }
       }}
-      // Cursor pointer when interactable
       onPointerOver={() => { if(isHandOpen) document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
-      <mesh geometry={geometry} material={material} castShadow receiveShadow />
       <MessageCard text={message} styleIndex={styleIndex} isFocused={isFocused} />
     </group>
   );
@@ -738,10 +804,8 @@ const LuxuryTree: React.FC = () => {
   useFrame((state, delta) => {
     const target = isHandOpen ? 1 : 0;
     
-    // ADJUSTED SPEEDS based on user feedback:
-    // Retract (target=0): 2.0 (Double previous 1.0) for faster closing.
-    // Scatter (target=1): 4.0 for immediate, snappy reaction when gesture is detected.
-    const lerpSpeed = isHandOpen ? 4.0 : 2.0;
+    // ADJUSTED SPEEDS
+    const lerpSpeed = isHandOpen ? 4.0 : 10.0;
     
     progressRef.current = THREE.MathUtils.lerp(progressRef.current, target, delta * lerpSpeed);
 
@@ -755,16 +819,18 @@ const LuxuryTree: React.FC = () => {
       <group ref={rotatingGroupRef}>
         <Foliage progressRef={progressRef} />
 
-        {/* Ornament counts */}
-        <OrnamentLayer count={40} color="#ffcc00" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.5} />
-        <OrnamentLayer count={30} color="#800080" geometry={ballGeo} scaleBase={0.12} progressRef={progressRef} />
-        <OrnamentLayer count={20} color="#ff0000" geometry={ballGeo} scaleBase={0.08} progressRef={progressRef} />
+        {/* Ornaments */}
+        <OrnamentLayer count={120} color="#ffcc00" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.5} />
+        <OrnamentLayer count={90} color="#C0C0C0" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.6} />
+
+        <OrnamentLayer count={90} color="#800080" geometry={ballGeo} scaleBase={0.12} progressRef={progressRef} />
+        <OrnamentLayer count={60} color="#ff0000" geometry={ballGeo} scaleBase={0.08} progressRef={progressRef} />
         
         {/* Lights */}
-        <OrnamentLayer count={8} color="#ff0055" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={8} color="#00ff55" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={8} color="#0055ff" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={8} color="#ffaa00" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+        <OrnamentLayer count={24} color="#ff0055" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+        <OrnamentLayer count={24} color="#00ff55" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+        <OrnamentLayer count={24} color="#0055ff" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+        <OrnamentLayer count={24} color="#ffaa00" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
 
         <Polaroids progressRef={progressRef} />
 
