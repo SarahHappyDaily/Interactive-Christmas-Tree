@@ -16,38 +16,38 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const TREE_HEIGHT = 7;
 const TREE_WIDTH = 3.5;
 
-// Insightful, Cheerful & Wise Quotes
+// Insightful, Cheerful & Wise Quotes (Updated with witty & warm Christmas wishes)
 const BLESSINGS = [
-  "Keep your face\nalways toward\nthe sunshine.",
-  "Turn your\nwounds into\nwisdom.",
-  "Happiness\ndepends upon\nourselves.",
-  "Believe you\ncan and you're\nhalfway there.",
-  "It is never\ntoo late to be\nwhat you might\nhave been.",
-  "Life is\neither a daring\nadventure or\nnothing.",
-  "The best way\nto predict the\nfuture is to\ncreate it.",
-  "You are\nnever too old\nto set another\ngoal.",
-  "Spread love\neverywhere\nyou go.",
-  "Every moment\nis a fresh\nbeginning.",
-  "Simplicity is\nthe ultimate\nsophistication.",
-  "Everything\nyou can imagine\nis real.",
-  "Hope is\na waking\ndream.",
-  "Do what\nyou love,\nlove what\nyou do.",
-  "Peace begins\nwith a\nsmile.",
-  "Dream big\nand dare\nto fail.",
-  "Be the\nchange you\nwish to see.",
-  "Silence is\na true friend\nwho never\nbetrays.",
-  "Knowledge\nspeaks, but\nwisdom listens.",
-  "Stars can't\nshine without\ndarkness.",
-  "Count your\nage by friends,\nnot years.",
-  "Life isn't about\nfinding yourself.\nIt's about\ncreating yourself.",
-  "Rise above\nthe storm and\nyou will find\nthe sunshine.",
-  "A joyous heart\nis the inevitable\nresult of a heart\nburning with love.",
-  "Difficult roads\noften lead to\nbeautiful destinations.",
-  "Your time\nis limited,\ndon't waste it.",
-  "Wherever life\nplants you,\nbloom with grace.",
-  "The journey\nof a thousand\nmiles begins\nwith one step.",
-  "Kindness is\nfree, sprinkle\nit everywhere.",
-  "Don't count\nthe days,\nmake the\ndays count."
+  "May your\nWi-Fi be\nstrong & your\ncoffee hot.",
+  "You light up\nthe room\nbrighter than\nthis tree.",
+  "Calories\ndon't count\nin December.",
+  "Santa saw\nyour Instagram.\nYou're getting\nclothes.", // A bit of humor
+  "May your\nwrapping paper\ncut like\nbutter.", // The ultimate satisfaction
+  "You are the\nmarshmallow\nto my cocoa.",
+  "Rest is\nproductive.\nSleep in.",
+  "May your\nleftovers be\ndelicious.",
+  "Unwrap\nyourself.\nYou are\na gift.",
+  "Peace over\nperfection\nthis year.",
+  "Your smile\nis my favorite\nornament.",
+  "Stay cozy,\nstay wild,\nstay you.",
+  "May your\nsocks be warm\n& heart light.",
+  "Don't get\nyour tinsel\nin a tangle.",
+  "Wishing you\nsilence when\nyou need it.",
+  "You deserve\nthe biggest\ncookie.",
+  "Snowflakes\nare unique.\nJust like you.",
+  "Glow\ndifferently\nthis year.",
+  "May your\nheart be as\nfull as your\nplate.",
+  "Collect\nmoments,\nnot things.",
+  "Put down\nthe phone.\nLook at\nthe stars.",
+  "You make\nwinter feel\nwarm.",
+  "Wishing you\na season of\nsmall miracles.",
+  "Treat\nyourself like\na friend.",
+  "Believe in\nthe magic of\nnew starts.",
+  "Sparkle\na little\nbrighter.",
+  "You are\nloved more\nthan you know.",
+  "Relax.\nYou've done\nenough.",
+  "Here’s to\nslow mornings.",
+  "Merry\neverything & \nhappy always."
 ];
 
 // Generate a texture for the message card with varied styles and handwriting fonts
@@ -152,7 +152,7 @@ const createMessageTexture = (text: string, styleIndex: number) => {
   // Footer Decoration
   ctx.font = `40px ${style.font}`;
   ctx.globalAlpha = 0.6;
-  ctx.fillText('~ Wisdom ~', 256, 580);
+  ctx.fillText('~ with love ~', 256, 580);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
