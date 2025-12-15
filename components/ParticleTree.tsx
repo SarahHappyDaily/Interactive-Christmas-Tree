@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { useFrame, useLoader, extend } from '@react-three/fiber';
+import { useFrame, useLoader, extend, useThree } from '@react-three/fiber';
 import { Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { TextGeometry, FontLoader, MeshSurfaceSampler } from 'three-stdlib';
@@ -800,6 +800,23 @@ const LuxuryTree: React.FC = () => {
   const { isHandOpen } = useTreeStore();
   const progressRef = useRef(0);
   const ballGeo = useMemo(() => new THREE.SphereGeometry(1, 16, 16), []);
+  const { viewport } = useThree();
+
+  // Responsive Layout Check (Portrait vs Landscape)
+  const isPortrait = viewport.width < viewport.height;
+  
+  // Mobile Adjustments:
+  // 1. Move Tree Down
+  const treeY = isPortrait ? -1.8 : 0;
+  
+  // 2. Text Positions & Size
+  const merryConfig = isPortrait 
+    ? { pos: [0, 5.0, 0] as [number, number, number], size: 0.8 } 
+    : { pos: [-6.5, 0, 0] as [number, number, number], size: 1.2 };
+    
+  const xmasConfig = isPortrait 
+    ? { pos: [0, 4.0, 0] as [number, number, number], size: 0.8 } 
+    : { pos: [8.5, 0, 0] as [number, number, number], size: 1.2 };
 
   useFrame((state, delta) => {
     const target = isHandOpen ? 1 : 0;
@@ -816,30 +833,34 @@ const LuxuryTree: React.FC = () => {
 
   return (
     <group>
-      <group ref={rotatingGroupRef}>
-        <Foliage progressRef={progressRef} />
+      {/* Tree Group: Moved down on mobile */}
+      <group position={[0, treeY, 0]}>
+        <group ref={rotatingGroupRef}>
+          <Foliage progressRef={progressRef} />
 
-        {/* Ornaments */}
-        <OrnamentLayer count={120} color="#ffcc00" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.5} />
-        <OrnamentLayer count={90} color="#C0C0C0" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.6} />
+          {/* Ornaments */}
+          <OrnamentLayer count={120} color="#ffcc00" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.5} />
+          <OrnamentLayer count={90} color="#C0C0C0" geometry={ballGeo} scaleBase={0.15} progressRef={progressRef} emissiveIntensity={0.6} />
 
-        <OrnamentLayer count={90} color="#800080" geometry={ballGeo} scaleBase={0.12} progressRef={progressRef} />
-        <OrnamentLayer count={60} color="#ff0000" geometry={ballGeo} scaleBase={0.08} progressRef={progressRef} />
-        
-        {/* Lights */}
-        <OrnamentLayer count={24} color="#ff0055" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={24} color="#00ff55" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={24} color="#0055ff" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
-        <OrnamentLayer count={24} color="#ffaa00" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+          <OrnamentLayer count={90} color="#800080" geometry={ballGeo} scaleBase={0.12} progressRef={progressRef} />
+          <OrnamentLayer count={60} color="#ff0000" geometry={ballGeo} scaleBase={0.08} progressRef={progressRef} />
+          
+          {/* Lights */}
+          <OrnamentLayer count={24} color="#ff0055" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+          <OrnamentLayer count={24} color="#00ff55" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+          <OrnamentLayer count={24} color="#0055ff" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
+          <OrnamentLayer count={24} color="#ffaa00" geometry={ballGeo} scaleBase={0.06} progressRef={progressRef} emissiveIntensity={3.5} />
 
-        <Polaroids progressRef={progressRef} />
+          <Polaroids progressRef={progressRef} />
 
-        <HolyStar progressRef={progressRef} />
-        <GiftPile progressRef={progressRef} />
+          <HolyStar progressRef={progressRef} />
+          <GiftPile progressRef={progressRef} />
+        </group>
       </group>
       
-      <ParticleText text="MERRY" position={[-6.5, 0, 0]} size={1.2} density={4000} progressRef={progressRef} />
-      <ParticleText text="CHRISTMAS" position={[8.5, 0, 0]} size={1.2} density={5000} progressRef={progressRef} />
+      {/* Text Group: Independent positioning based on screen size */}
+      <ParticleText text="MERRY" position={merryConfig.pos} size={merryConfig.size} density={4000} progressRef={progressRef} />
+      <ParticleText text="CHRISTMAS" position={xmasConfig.pos} size={xmasConfig.size} density={5000} progressRef={progressRef} />
 
     </group>
   );

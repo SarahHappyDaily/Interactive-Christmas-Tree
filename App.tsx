@@ -12,9 +12,9 @@ const GestureController = () => {
   const { camera } = useThree();
   const { handX, handY, handZ, isTracking } = useTreeStore();
   
-  // Adjusted default position to 16. This moves the camera closer so the tree fills ~1/5 of the screen.
-  const currentPos = useRef(new THREE.Vector3(0, 0, 16));
-  const targetPos = useRef(new THREE.Vector3(0, 0, 16));
+  // Adjusted default position to 18 as requested for better screen fit
+  const currentPos = useRef(new THREE.Vector3(0, 0, 18));
+  const targetPos = useRef(new THREE.Vector3(0, 0, 18));
 
   useFrame((state, delta) => {
     // Enable gesture control whenever a hand is tracked (Open or Closed)
@@ -30,9 +30,9 @@ const GestureController = () => {
       
       // 3. Distance (Zoom/Push/Pull)
       // handZ range ~0.1-0.3. 
-      // New range: 28 (Far) to 10 (Close). Default start is 16.
+      // New range: 30 (Far) to 12 (Close). Default start is 18.
       const zInput = THREE.MathUtils.clamp(handZ, 0.05, 0.35);
-      const distance = THREE.MathUtils.mapLinear(zInput, 0.05, 0.35, 28, 10);
+      const distance = THREE.MathUtils.mapLinear(zInput, 0.05, 0.35, 30, 12);
 
       // Convert Spherical to Cartesian
       targetPos.current.set(
@@ -70,8 +70,8 @@ const App: React.FC = () => {
         gl={{ antialias: false, toneMappingExposure: 1.2 }} 
         shadows
       >
-        {/* Adjusted default position to [0, 0, 16] */}
-        <PerspectiveCamera makeDefault position={[0, 0, 16]} fov={50} />
+        {/* Adjusted default position to [0, 0, 18] */}
+        <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={50} />
         
         {/* Gesture Controller */}
         <GestureController />

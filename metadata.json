@@ -1,5 +1,5 @@
 {
-  "name": "Copy of 热闹圣诞 Gesture Controlled",
+  "name": "信纸圣诞树",
   "description": "A breathtaking interactive 3D particle Christmas tree controlled by hand gestures using computer vision.",
   "requestFramePermissions": [
     "camera"
