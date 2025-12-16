@@ -665,16 +665,38 @@ const Polaroids = ({ progressRef }: { progressRef: React.MutableRefObject<number
     return new Array(count).fill(0).map((_, i) => {
       const t = 1 - Math.sqrt((i+1)/(count+1));
       const theta = i * GOLDEN_ANGLE;
+      
+      const target = getTreePos(t, theta, TREE_HEIGHT, TREE_WIDTH * 1.1);
       const chaos = getChaosPos(15);
-      const chaosRotation = new THREE.Euler(
-          (Math.random() - 0.5) * 0.5, 
-          Math.random() * Math.PI * 2, 
-          (Math.random() - 0.5) * 0.3  
+      
+      // IMPROVED LOGIC: 
+      // Offsets tuned for "Readable Disorder"
+      // Z-Roll reduced to +/- 0.5 (~28 deg) so cards don't look sideways
+      const baseOffset = new THREE.Euler(
+        (Math.random() - 0.5) * 0.5, // X Tilt: +/- 14 deg
+        (Math.random() - 0.5) * 0.5, // Y Tilt: +/- 14 deg
+        (Math.random() - 0.5) * 0.5  // Z Roll: +/- 14 deg
       );
+
+      // Animation: Each card has unique drifting speeds for the "breathing" effect
+      const driftSpeed = new THREE.Vector3(
+        0.2 + Math.random() * 0.5,
+        0.2 + Math.random() * 0.5,
+        0.1 + Math.random() * 0.3
+      );
+      
+      const driftPhase = new THREE.Vector3(
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
+      );
+
       return {
-        target: getTreePos(t, theta, TREE_HEIGHT, TREE_WIDTH * 1.1),
+        target,
         chaos,
-        chaosRotation
+        baseOffset,
+        driftSpeed,
+        driftPhase
       }
     });
   }, [count]);
@@ -711,7 +733,7 @@ const SinglePolaroid = ({
     material, 
     message, 
     styleIndex,
-    index,
+    index, 
     isFocused,
     setFocusedIndex,
     isHandOpen
@@ -740,7 +762,14 @@ const SinglePolaroid = ({
         groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 5);
 
         dummyObj.position.copy(currentPos.current);
-        dummyObj.lookAt(state.camera.position);
+        
+        // CORRECTION: Convert camera world position to local space of the parent
+        const camPosLocal = state.camera.position.clone();
+        if (groupRef.current.parent) {
+             groupRef.current.parent.worldToLocal(camPosLocal);
+        }
+        dummyObj.lookAt(camPosLocal);
+        
         targetQuaternion.current.copy(dummyObj.quaternion);
 
     } else {
@@ -754,24 +783,45 @@ const SinglePolaroid = ({
         groupRef.current.scale.lerp(new THREE.Vector3(baseScale, baseScale, baseScale), delta * 2);
 
         if (progress > 0.5) {
-            // Chaos State: Floating gently
-            const euler = data.chaosRotation;
+            // Chaos State: Intelligent "Natural" Facing
             
-            // Minimal drift to keep them readable but alive
-            const driftX = Math.sin(state.clock.elapsedTime * 0.5 + index) * 0.05;
-            const driftY = Math.cos(state.clock.elapsedTime * 0.3 + index) * 0.05;
+            // 1. Position dummy at local pos
+            dummyObj.position.copy(currentPos.current);
             
-            dummyObj.rotation.set(euler.x + driftX, euler.y + driftY, euler.z);
-            targetQuaternion.current.setFromEuler(dummyObj.rotation);
+            // 2. Face Camera (Account for Parent Rotation!)
+            // We must transform the camera's WORLD position into the parent's LOCAL space
+            const camPosLocal = state.camera.position.clone();
+            if (groupRef.current.parent) {
+                // Ensure we look at the camera correctly even if the parent (tree) is spinning
+                groupRef.current.parent.worldToLocal(camPosLocal);
+            }
+            dummyObj.lookAt(camPosLocal);
+            
+            // 3. Apply Random Static Offsets (Messiness)
+            // Note: We use the stored offsets which we will tune to be subtler
+            dummyObj.rotateX(data.baseOffset.x);
+            dummyObj.rotateY(data.baseOffset.y);
+            dummyObj.rotateZ(data.baseOffset.z);
+
+            // 4. Apply Gentle Breathing Motion (Life)
+            const t = state.clock.elapsedTime;
+            const oscX = Math.sin(t * data.driftSpeed.x + data.driftPhase.x) * 0.05; // Reduced sway
+            const oscY = Math.cos(t * data.driftSpeed.y + data.driftPhase.y) * 0.05; 
+
+            dummyObj.rotateX(oscX);
+            dummyObj.rotateY(oscY);
+
+            targetQuaternion.current.copy(dummyObj.quaternion);
         } else {
-            // Tree State: Strict upright facing outward
+            // Tree State: Strict upright facing outward from center
             const angle = Math.atan2(currentPos.current.x, currentPos.current.z);
             dummyObj.rotation.set(0, angle, 0);
             targetQuaternion.current.setFromEuler(dummyObj.rotation);
         }
     }
     
-    groupRef.current.quaternion.slerp(targetQuaternion.current, delta * 3);
+    // Smoothly interpolate to the new smart rotation
+    groupRef.current.quaternion.slerp(targetQuaternion.current, delta * 4);
   });
 
   return (
